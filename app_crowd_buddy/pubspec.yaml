@@ -1,0 +1,46 @@
+name: crowd_buddy
+description: AI-powered crowd management system (CrowdBuddy)
+publish_to: 'none'  # Ensures the project isn’t accidentally published to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Icon set for Cupertino (iOS style icons)
+  cupertino_icons: ^1.0.0
+
+  # Image picker (camera/gallery access)
+  image_picker: ^1.2.0    # Latest stable, Dart 3 compatible :contentReference[oaicite:0]{index=0}
+
+  # State management and dependency injection
+  flutter_riverpod: ^2.6.1  # Latest stable, Dart 3 compatible :contentReference[oaicite:1]{index=1}
+
+  # Add more UI/helper packages as your app evolves
+  # e.g., google_maps_flutter, fl_chart, geolocator, http, etc.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting package
+  flutter_lints: ^5.0.0  # Latest recommended version :contentReference[oaicite:2]{index=2}
+
+flutter:
+  uses-material-design: true
+
+  # Uncomment to include image assets or fonts
+  # assets:
+  #   - assets/images/
+  #
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: fonts/CustomFont-Regular.ttf
+  #       - asset: fonts/CustomFont-Bold.ttf
+  #         weight: 700
