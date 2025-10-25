@@ -1,0 +1,1792 @@
+{
+	"info": {
+		"_postman_id": "crowd-mgmt-system-api",
+		"name": "Crowd Management System API",
+		"description": "Complete API collection for Crowd Management System Backend",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User (Public)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1234567890\",\n  \"role\": \"public\",\n  \"password\": \"securepass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User (Organizer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Sarah Johnson\",\n  \"email\": \"sarah.johnson@eventmanager.com\",\n  \"phone\": \"+1555123456\",\n  \"role\": \"organizer\",\n  \"password\": \"organizer2024\",\n  \"location\": {\n    \"lat\": 28.6139,\n    \"lon\": 77.2090\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User (Medical)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Dr. Michael Smith\",\n  \"email\": \"dr.smith@hospital.com\",\n  \"phone\": \"+1555987654\",\n  \"role\": \"medical\",\n  \"password\": \"medical@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User (Police)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Officer Jane Williams\",\n  \"email\": \"officer.williams@police.gov\",\n  \"phone\": \"+1555456789\",\n  \"role\": \"police\",\n  \"password\": \"police@secure\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"securepass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/users",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "users"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Users by Role",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/users?role=organizer",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "users"],
+							"query": [
+								{
+									"key": "role",
+									"value": "organizer"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "users", "{{user_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "Create Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Summer Music Festival\",\n  \"description\": \"Annual outdoor music festival\",\n  \"start_time\": \"2025-11-15T18:00:00\",\n  \"end_time\": \"2025-11-15T23:00:00\",\n  \"location\": \"Central Park\",\n  \"capacity\": 5000,\n  \"organizer_id\": \"{{organizer_id}}\",\n  \"areas\": [\n    {\n      \"name\": \"Main Stage\",\n      \"location\": {\"lat\": 28.6139, \"lon\": 77.2090},\n      \"radius_m\": 50\n    },\n    {\n      \"name\": \"Food Court\",\n      \"location\": {\"lat\": 28.6145, \"lon\": 77.2095},\n      \"radius_m\": 30\n    },\n    {\n      \"name\": \"VIP Area\",\n      \"location\": {\"lat\": 28.6135, \"lon\": 77.2085},\n      \"radius_m\": 20\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/events/",
+							"host": ["{{base_url}}"],
+							"path": ["events", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/",
+							"host": ["{{base_url}}"],
+							"path": ["events", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Events by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/?status=live",
+							"host": ["{{base_url}}"],
+							"path": ["events", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "live"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Events by Organizer",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/?organizer_id={{organizer_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["events", ""],
+							"query": [
+								{
+									"key": "organizer_id",
+									"value": "{{organizer_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{event_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Event",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Summer Music Festival - Updated\",\n  \"description\": \"Annual outdoor music festival with extended hours\",\n  \"start_time\": \"2025-11-15T17:00:00\",\n  \"end_time\": \"2025-11-16T00:00:00\",\n  \"location\": \"Central Park\",\n  \"capacity\": 6000,\n  \"organizer_id\": \"{{organizer_id}}\",\n  \"areas\": [\n    {\n      \"name\": \"Main Stage\",\n      \"location\": {\"lat\": 28.6139, \"lon\": 77.2090},\n      \"radius_m\": 60\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/events/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{event_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Event Status to Live",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/{{event_id}}/status?status=live",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{event_id}}", "status"],
+							"query": [
+								{
+									"key": "status",
+									"value": "live"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Event Status to Completed",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/{{event_id}}/status?status=completed",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{event_id}}", "status"],
+							"query": [
+								{
+									"key": "status",
+									"value": "completed"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Event",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/events/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["events", "{{event_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Crowd Density",
+			"item": [
+				{
+					"name": "Create Density Record",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"area_name\": \"Main Stage\",\n  \"location\": {\"lat\": 28.6139, \"lon\": 77.2090},\n  \"radius_m\": 50,\n  \"person_count\": 850\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/crowd-density/",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Density Record - Food Court",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"area_name\": \"Food Court\",\n  \"location\": {\"lat\": 28.6145, \"lon\": 77.2095},\n  \"radius_m\": 30,\n  \"person_count\": 450\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/crowd-density/",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Density Records",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Density by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Density by Area",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/?event_id={{event_id}}&area_name=Main Stage",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								},
+								{
+									"key": "area_name",
+									"value": "Main Stage"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Density by Level",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/?density_level=Risky",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", ""],
+							"query": [
+								{
+									"key": "density_level",
+									"value": "Risky"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Density Record by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/{{density_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", "{{density_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Latest Density for Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/event/{{event_id}}/latest?limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", "event", "{{event_id}}", "latest"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current Density for All Areas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/crowd-density/event/{{event_id}}/areas",
+							"host": ["{{base_url}}"],
+							"path": ["crowd-density", "event", "{{event_id}}", "areas"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Medical Emergencies",
+			"item": [
+				{
+					"name": "Report Emergency - Heatstroke",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"emergency_type\": \"heatstroke\",\n  \"severity\": \"severe\",\n  \"patient_name\": \"John Davis\",\n  \"patient_age\": 45,\n  \"description\": \"Patient experiencing dizziness, nausea, and excessive sweating. Appears disoriented.\",\n  \"location\": \"Stage Front - Section B\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Report Emergency - Injury",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"emergency_type\": \"injury\",\n  \"severity\": \"moderate\",\n  \"patient_name\": \"Lisa Martinez\",\n  \"patient_age\": 28,\n  \"description\": \"Ankle injury from fall. Patient unable to bear weight. Swelling observed.\",\n  \"location\": \"Food Court Area\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Report Emergency - Cardiac",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"emergency_type\": \"cardiac\",\n  \"severity\": \"critical\",\n  \"patient_name\": \"Robert Anderson\",\n  \"patient_age\": 67,\n  \"description\": \"Chest pain and shortness of breath. Patient has history of heart condition.\",\n  \"location\": \"Parking Zone A\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Emergencies",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Emergencies by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Emergencies by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/?status=reported",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "reported"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Emergencies by Severity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/?severity=critical",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", ""],
+							"query": [
+								{
+									"key": "severity",
+									"value": "critical"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Emergency by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/{{emergency_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", "{{emergency_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status - Responder Dispatched",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/{{emergency_id}}/status?new_status=responder_dispatched&responder_name=Dr. Sarah Williams",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", "{{emergency_id}}", "status"],
+							"query": [
+								{
+									"key": "new_status",
+									"value": "responder_dispatched"
+								},
+								{
+									"key": "responder_name",
+									"value": "Dr. Sarah Williams"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status - On Scene",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/{{emergency_id}}/status?new_status=on_scene&responder_name=Dr. Sarah Williams&response_time=4",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", "{{emergency_id}}", "status"],
+							"query": [
+								{
+									"key": "new_status",
+									"value": "on_scene"
+								},
+								{
+									"key": "responder_name",
+									"value": "Dr. Sarah Williams"
+								},
+								{
+									"key": "response_time",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status - Resolved",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/{{emergency_id}}/status?new_status=resolved",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", "{{emergency_id}}", "status"],
+							"query": [
+								{
+									"key": "new_status",
+									"value": "resolved"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Emergency Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/medical-emergencies/stats/event/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["medical-emergencies", "stats", "event", "{{event_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Lost Persons",
+			"item": [
+				{
+					"name": "Report Lost Person - Child",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reporter_id\": \"{{user_id}}\",\n  \"reporter_name\": \"Sarah Johnson\",\n  \"reporter_contact\": \"+1555012345\",\n  \"person_name\": \"Emma Johnson\",\n  \"age\": 7,\n  \"gender\": \"female\",\n  \"description\": \"White t-shirt with blue jeans, brown hair in pigtails, carrying a pink backpack\",\n  \"last_seen_location\": \"Main Entrance\",\n  \"last_seen_time\": \"14:30\",\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lost-persons/",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Report Lost Person - Elderly",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reporter_id\": \"{{user_id}}\",\n  \"reporter_name\": \"Linda Chen\",\n  \"reporter_contact\": \"+1555045678\",\n  \"person_name\": \"Michael Chen\",\n  \"age\": 65,\n  \"gender\": \"male\",\n  \"description\": \"Gray jacket, black pants, wearing glasses, uses walking stick\",\n  \"last_seen_location\": \"Food Court Area\",\n  \"last_seen_time\": \"15:10\",\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/lost-persons/",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Lost Person Reports",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reports by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reports by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/?status=searching",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "searching"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reports by Priority",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/?priority=critical",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", ""],
+							"query": [
+								{
+									"key": "priority",
+									"value": "critical"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Report by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/{{report_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", "{{report_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status - Searching",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/{{report_id}}/status?new_status=searching",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", "{{report_id}}", "status"],
+							"query": [
+								{
+									"key": "new_status",
+									"value": "searching"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Status - Found",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/{{report_id}}/status?new_status=found",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", "{{report_id}}", "status"],
+							"query": [
+								{
+									"key": "new_status",
+									"value": "found"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Reports",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/search/active?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", "search", "active"],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/lost-persons/stats/event/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["lost-persons", "stats", "event", "{{event_id}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Feedback",
+			"item": [
+				{
+					"name": "Submit Feedback - Positive",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"rating\": 5,\n  \"comments\": \"Great event! Well organized and safety measures were excellent. Had an amazing time!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback/",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Feedback - Negative",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"rating\": 2,\n  \"comments\": \"Poor crowd management. Long queues and bad facilities. Very disappointing experience.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback/",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Feedback - Rating Only",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"event_id\": \"{{event_id}}\",\n  \"rating\": 4\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback/",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Feedback",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Feedback by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Feedback by User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/?user_id={{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "{{user_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Feedback by Min Rating",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/?min_rating=4",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""],
+							"query": [
+								{
+									"key": "min_rating",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Feedback by Sentiment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/?sentiment=positive",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", ""],
+							"query": [
+								{
+									"key": "sentiment",
+									"value": "positive"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Feedback by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/{{feedback_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", "{{feedback_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Feedback Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/event/{{event_id}}/stats",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", "event", "{{event_id}}", "stats"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Recent Feedback",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/event/{{event_id}}/recent?limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", "event", "{{event_id}}", "recent"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Facilities",
+			"item": [
+				{
+					"name": "Create Facility - Medical Center",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"medical_center\",\n  \"name\": \"First Aid Station 1\",\n  \"location\": {\"lat\": 28.6140, \"lon\": 77.2092},\n  \"contact\": \"+1555098765\",\n  \"available\": true,\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/facilities/",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Facility - Washroom",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"washroom\",\n  \"name\": \"Restroom Block A\",\n  \"location\": {\"lat\": 28.6142, \"lon\": 77.2088},\n  \"available\": true,\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/facilities/",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Facility - Food Court",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"food_court\",\n  \"name\": \"Main Food Plaza\",\n  \"location\": {\"lat\": 28.6145, \"lon\": 77.2095},\n  \"contact\": \"+1555087654\",\n  \"available\": true,\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/facilities/",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Facility - Emergency Exit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"emergency_exit\",\n  \"name\": \"Emergency Exit North\",\n  \"location\": {\"lat\": 28.6150, \"lon\": 77.2100},\n  \"available\": true,\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/facilities/",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Facilities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facilities by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facilities by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/?facility_type=medical_center",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""],
+							"query": [
+								{
+									"key": "facility_type",
+									"value": "medical_center"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Facilities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/?available=true",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", ""],
+							"query": [
+								{
+									"key": "available",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facility by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/{{facility_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", "{{facility_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Facility Availability - Unavailable",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/{{facility_id}}/availability?available=false",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", "{{facility_id}}", "availability"],
+							"query": [
+								{
+									"key": "available",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Facility Availability - Available",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/{{facility_id}}/availability?available=true",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", "{{facility_id}}", "availability"],
+							"query": [
+								{
+									"key": "available",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Facility",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"medical_center\",\n  \"name\": \"First Aid Station 1 - Updated\",\n  \"location\": {\"lat\": 28.6140, \"lon\": 77.2092},\n  \"contact\": \"+1555098765\",\n  \"available\": true,\n  \"event_id\": \"{{event_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/facilities/{{facility_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", "{{facility_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Facility",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/{{facility_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", "{{facility_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find Nearby Facilities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/facilities/nearby/search?lat=28.6139&lon=77.2090&facility_type=medical_center&max_distance_km=1.0",
+							"host": ["{{base_url}}"],
+							"path": ["facilities", "nearby", "search"],
+							"query": [
+								{
+									"key": "lat",
+									"value": "28.6139"
+								},
+								{
+									"key": "lon",
+									"value": "77.2090"
+								},
+								{
+									"key": "facility_type",
+									"value": "medical_center"
+								},
+								{
+									"key": "max_distance_km",
+									"value": "1.0"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Alerts",
+			"item": [
+				{
+					"name": "Create Alert - Warning",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"title\": \"Crowd Surge Warning\",\n  \"message\": \"High density detected at Main Stage. Please move to alternate areas.\",\n  \"alert_type\": \"warning\",\n  \"severity\": \"high\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alerts/",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Alert - Emergency",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"title\": \"Emergency Evacuation\",\n  \"message\": \"Please proceed to nearest emergency exit immediately. Follow staff instructions.\",\n  \"alert_type\": \"emergency\",\n  \"severity\": \"critical\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alerts/",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Alert - Info",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"title\": \"Event Update\",\n  \"message\": \"Next performance starts in 15 minutes at Main Stage.\",\n  \"alert_type\": \"info\",\n  \"severity\": \"low\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alerts/",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Alerts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Alerts by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Alerts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/?is_active=true",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""],
+							"query": [
+								{
+									"key": "is_active",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Alerts by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/?alert_type=emergency",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""],
+							"query": [
+								{
+									"key": "alert_type",
+									"value": "emergency"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Alerts by Severity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/?severity=critical",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", ""],
+							"query": [
+								{
+									"key": "severity",
+									"value": "critical"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Alert by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/{{alert_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "{{alert_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Alert",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/{{alert_id}}/deactivate",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "{{alert_id}}", "deactivate"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Alert",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/{{alert_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "{{alert_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Weather Alert",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"temperature\": 35.5,\n  \"humidity\": 75,\n  \"condition\": \"Hot and Humid\",\n  \"wind_speed\": 15.5,\n  \"description\": \"High heat index. Stay hydrated and seek shade.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alerts/weather",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "weather"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Weather Alerts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/weather",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "weather"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Weather Alerts by Event",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/weather?event_id={{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "weather"],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Weather Alert by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/weather/{{weather_alert_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "weather", "{{weather_alert_id}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Latest Weather Alert",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alerts/weather/event/{{event_id}}/latest",
+							"host": ["{{base_url}}"],
+							"path": ["alerts", "weather", "event", "{{event_id}}", "latest"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "System",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Root",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"],
+							"path": [""]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "organizer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "event_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "density_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "emergency_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "report_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "feedback_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "facility_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "alert_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "weather_alert_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
