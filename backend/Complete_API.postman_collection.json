@@ -951,7 +951,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reporter_id\": \"{{user_id}}\",\n  \"reporter_name\": \"Sarah Johnson\",\n  \"reporter_contact\": \"+1555012345\",\n  \"person_name\": \"Emma Johnson\",\n  \"age\": 7,\n  \"gender\": \"female\",\n  \"description\": \"White t-shirt with blue jeans, brown hair in pigtails, carrying a pink backpack\",\n  \"last_seen_location\": \"Main Entrance\",\n  \"last_seen_time\": \"14:30\",\n  \"event_id\": \"{{event_id}}\"\n}"
+              "raw": "{\n  \"reporter_id\": \"{{user_id}}\",\n  \"reporter_name\": \"Sarah Johnson\",\n  \"age\": 7,\n  \"gender\": \"female\",\n  \"description\": \"White t-shirt with blue jeans, brown hair in pigtails, carrying a pink backpack\",\n  \"last_seen_location\": \"Main Entrance\",\n  \"last_seen_time\": \"14:30\",\n  \"event_id\": \"{{event_id}}\",\n  \"name\": \"Emma Johnson\",\n  \"reporter_phone\": \"+1555012345\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/lost-persons/",
@@ -978,7 +978,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reporter_id\": \"{{user_id}}\",\n  \"reporter_name\": \"Linda Chen\",\n  \"reporter_contact\": \"+1555045678\",\n  \"person_name\": \"Michael Chen\",\n  \"age\": 65,\n  \"gender\": \"male\",\n  \"description\": \"Gray jacket, black pants, wearing glasses, uses walking stick\",\n  \"last_seen_location\": \"Food Court Area\",\n  \"last_seen_time\": \"15:10\",\n  \"event_id\": \"{{event_id}}\"\n}"
+              "raw": "{\n  \"reporter_id\": \"{{user_id}}\",\n  \"reporter_name\": \"Linda Chen\",\n  \"age\": 65,\n  \"gender\": \"male\",\n  \"description\": \"Gray jacket, black pants, wearing glasses, uses walking stick\",\n  \"last_seen_location\": \"Food Court Area\",\n  \"last_seen_time\": \"15:10\",\n  \"event_id\": \"{{event_id}}\",\n  \"name\": \"Michael Chen\",\n  \"reporter_phone\": \"+1555045678\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/lost-persons/",
@@ -2130,7 +2130,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"temperature\": 35.5,\n  \"humidity\": 75,\n  \"condition\": \"Hot and Humid\",\n  \"wind_speed\": 15.5,\n  \"description\": \"High heat index. Stay hydrated and seek shade.\"\n}"
+              "raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"temperature\": 35.5,\n  \"humidity\": 78.0,\n  \"condition\": \"Hot and Humid\",\n  \"wind_speed\": 5.2,\n  \"description\": \"High temperature alert - increased risk of heatstroke\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/alerts/weather",
