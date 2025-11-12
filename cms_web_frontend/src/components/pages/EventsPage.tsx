@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Calendar, MapPin, Users, X } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import api from '../../services/api';
 import { Event } from '../../types';
 
 interface EventsPageProps {
@@ -11,24 +11,61 @@ interface EventsPageProps {
 
 export default function EventsPage({ events, onEventSelect, onEventsUpdate }: EventsPageProps) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     location: '',
     date: '',
+    start_time: '',
+    end_time: '',
+    capacity: 0,
     attendees_count: 0
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    const { error } = await supabase
-      .from('events')
-      .insert([formData]);
+    try {
+      // Get organizer_id from localStorage or use a default for testing
+      const userId = localStorage.getItem('user_id') || 'ORG_DEFAULT_123';
+      
+      const eventData = {
+        name: formData.name,
+        description: formData.description || undefined,
+        location: formData.location,
+        date: formData.date,
+        start_time: formData.start_time || undefined,
+        end_time: formData.end_time || undefined,
+        capacity: formData.capacity || undefined,
+        attendees_count: formData.attendees_count,
+        organizer_id: userId,
+        areas: []
+      };
 
-    if (!error) {
+      await api.events.create(eventData);
+      
       setShowAddModal(false);
-      setFormData({ name: '', location: '', date: '', attendees_count: 0 });
+      setFormData({ 
+        name: '', 
+        description: '',
+        location: '', 
+        date: '', 
+        start_time: '',
+        end_time: '',
+        capacity: 0,
+        attendees_count: 0 
+      });
       onEventsUpdate();
+    } catch (err: any) {
+      console.error('Failed to create event:', err);
+      setError(err.response?.data?.detail || err.message || 'Failed to create event');
+      alert('Failed to create event: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,6 +142,12 @@ export default function EventsPage({ events, onEventSelect, onEventsUpdate }: Ev
               </button>
             </div>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -117,6 +160,44 @@ export default function EventsPage({ events, onEventSelect, onEventsUpdate }: Ev
                   className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Start Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    End Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                    className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
               </div>
 
               <div>
@@ -134,35 +215,36 @@ export default function EventsPage({ events, onEventSelect, onEventsUpdate }: Ev
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Date
+                  Capacity
                 </label>
                 <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  type="number"
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })}
                   className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
+                  placeholder="Optional"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Expected Attendees
+                  Event Areas (Optional)
                 </label>
-                <input
-                  type="number"
-                  value={formData.attendees_count}
-                  onChange={(e) => setFormData({ ...formData, attendees_count: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                  required
-                />
+                <button
+                  type="button"
+                  className="text-blue-400 text-sm hover:text-blue-300 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Area
+                </button>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium transition"
+                disabled={loading}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Event
+                {loading ? 'Creating...' : 'Create Event'}
               </button>
             </form>
           </div>

@@ -9,8 +9,8 @@ collection = db["items"]
 
 @router.post("/", response_model=dict)
 def create_item(item: Item):
-    result = collection.insert_one(item.dict())
-    return {"_id": str(result.inserted_id), **item.dict()}
+    result = collection.insert_one(item.model_dump())
+    return {"_id": str(result.inserted_id), **item.model_dump()}
 
 @router.get("/", response_model=list)
 def get_items():
@@ -32,7 +32,7 @@ def get_item(item_id: str):
 def update_item(item_id: str, item: Item):
     updated = collection.find_one_and_update(
         {"_id": ObjectId(item_id)},
-        {"$set": item.dict()},
+        {"$set": item.model_dump()},
         return_document=True
     )
     if not updated:
