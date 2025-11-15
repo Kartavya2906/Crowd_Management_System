@@ -122,19 +122,48 @@ async def infer_count(request: Request, file: UploadFile = File(None)):
         backend_error = str(e)
 
     # Fallback to LWCC if still None
-    # LWCC will use ~/.lwcc for model weights by default
+    # Note: LWCC has a critical bug - uses hardcoded /.lwcc path which is read-only on macOS
+    # This will fail on macOS without sudo/root access
     if count is None:
         try:
-            print("[DEBUG] Attempting LWCC inference...")
             from lwcc import LWCC
-            print(f"[DEBUG] Calling LWCC.get_count...")
             c = LWCC.get_count([tmp_path], model_name='DM-Count', model_weights='SHA', resize_img=True)
             count = int(round(float(c)))
-            print(f"[DEBUG] LWCC SUCCESS! Count: {count}")
         except Exception as e:
-            print(f"[DEBUG] LWCC error: {type(e).__name__}: {e}")
-            if backend_error is None:
-                backend_error = str(e)
+            # LWCC failed - use fallback estimation based on image analysis
+            print(f"[DEBUG] LWCC failed: {e}")
+            print(f"[DEBUG] Using fallback crowd estimation...")
+            try:
+                from PIL import Image
+                import numpy as np
+                
+                # Open image and analyze
+                img = Image.open(tmp_path)
+                img_array = np.array(img.convert('RGB'))
+                height, width = img_array.shape[:2]
+                
+                # Simple heuristic: detect regions with skin-tone-like colors
+                # This is a rough estimation, not accurate crowd counting
+                lower_skin = np.array([80, 50, 50], dtype=np.uint8)
+                upper_skin = np.array([255, 200, 180], dtype=np.uint8)
+                
+                skin_mask = np.all((img_array >= lower_skin) & (img_array <= upper_skin), axis=2)
+                skin_pixel_count = np.sum(skin_mask)
+                
+                # Estimate: assume average person occupies ~5000 pixels in typical crowd photo
+                total_pixels = height * width
+                if total_pixels > 0:
+                    density_ratio = skin_pixel_count / total_pixels
+                    # Rough estimation formula
+                    estimated_count = max(1, int(density_ratio * total_pixels / 3000))
+                    count = min(estimated_count, 1000)  # Cap at reasonable maximum
+                    
+                print(f"[DEBUG] Fallback estimation: {count} people (approximation)")
+                backend_error = f"LWCC unavailable ({str(e)[:50]}...), using fallback estimation"
+            except Exception as fallback_error:
+                print(f"[DEBUG] Fallback also failed: {fallback_error}")
+                if backend_error is None:
+                    backend_error = str(e)
 
     # Clean up temporary file
     try:

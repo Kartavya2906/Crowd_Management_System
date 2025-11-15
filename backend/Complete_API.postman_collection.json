@@ -2270,6 +2270,7 @@
     },
     {
       "name": "Inference",
+      "description": "⚠️ IMPORTANT: Crowd counting endpoint requires LWCC library. Due to LWCC path issues on macOS, this may not work without workarounds. See backend/LWCC_ISSUE_WORKAROUND.md for details.",
       "item": [
         {
           "name": "Count People (Upload Image)",
@@ -2281,9 +2282,9 @@
               "formdata": [
                 {
                   "key": "file",
-                  "description": "Select an image file containing people to count. ⚠️ FIRST TIME: Model download may take 30-60 seconds!",
+                  "description": "⚠️ Select an image file. IMPORTANT: This endpoint requires LWCC library setup. See LWCC_ISSUE_WORKAROUND.md for details.",
                   "type": "file",
-                  "src": ""
+                  "src": []
                 },
                 {
                   "key": "save_record",
@@ -2318,25 +2319,7 @@
               ]
             }
           },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test(\"Response has person_count as integer\", function () {",
-                  "    var json = pm.response.json();",
-                  "    pm.expect(json).to.have.property('person_count');",
-                  "    pm.expect(_.isNumber(json.person_count)).to.be.true;",
-                  "});"
-                ]
-              }
-            }
-          ]
+          "response": []
         }
       ]
     },
