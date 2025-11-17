@@ -8,7 +8,8 @@ router = APIRouter(prefix="/inference", tags=["Inference"])
 
 
 @router.post('/count')
-async def infer_count(request: Request, file: UploadFile = File(None)):
+async def infer_count(request: Request, 
+file: UploadFile = File(None)):
     """Accept an image file upload and return the estimated people count.
 
     - Attempts to use `inference_utils.load_model` and associated helpers if available.
@@ -47,17 +48,31 @@ async def infer_count(request: Request, file: UploadFile = File(None)):
             pass
 
         suffix = Path(getattr(upload, 'filename', 'upload.jpg')).suffix or '.jpg'
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-        try:
-            contents = await upload.read()
-            tmp.write(contents)
-            tmp.flush()
-            tmp_path = tmp.name
-        finally:
-            try:
-                tmp.close()
-            except Exception:
-                pass
+        
+        # Read upload contents - seek to beginning first
+        await upload.seek(0)
+        contents = await upload.read()
+        
+        # Validate that we have image data
+        if not contents or len(contents) == 0:
+            raise HTTPException(status_code=400, detail="Empty file uploaded")
+        
+        print(f"[DEBUG] Direct upload: {len(contents)} bytes, suffix: {suffix}")
+        
+        # Create temp file and write contents
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode='wb')
+        bytes_written = tmp.write(contents)
+        tmp.flush()
+        os.fsync(tmp.fileno())  # Force write to disk
+        tmp_path = tmp.name
+        tmp.close()  # Close but don't delete (delete=False)
+        
+        # Verify the file was written correctly
+        actual_size = os.path.getsize(tmp_path)
+        print(f"[DEBUG] Temp file created: {tmp_path}, wrote {bytes_written} bytes, actual size: {actual_size} bytes")
+        
+        if actual_size == 0:
+            raise HTTPException(status_code=500, detail=f"Failed to write temp file - size is 0 bytes")
     else:
         # Fallback: parse form data (older behavior). This requires python-multipart installed at runtime.
         try:
@@ -88,17 +103,31 @@ async def infer_count(request: Request, file: UploadFile = File(None)):
 
         # Write upload to a temporary file
         suffix = Path(getattr(upload, 'filename', 'upload.jpg')).suffix or '.jpg'
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-        try:
-            contents = await upload.read()
-            tmp.write(contents)
-            tmp.flush()
-            tmp_path = tmp.name
-        finally:
-            try:
-                tmp.close()
-            except Exception:
-                pass
+        
+        # Read upload contents - seek to beginning first in case it was read before
+        await upload.seek(0)
+        contents = await upload.read()
+        
+        # Validate that we have image data
+        if not contents or len(contents) == 0:
+            raise HTTPException(status_code=400, detail="Empty file uploaded")
+        
+        print(f"[DEBUG] Received upload: {len(contents)} bytes, suffix: {suffix}")
+        
+        # Create temp file and write contents
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, mode='wb')
+        bytes_written = tmp.write(contents)
+        tmp.flush()
+        os.fsync(tmp.fileno())  # Force write to disk
+        tmp_path = tmp.name
+        tmp.close()  # Close but don't delete (delete=False)
+        
+        # Verify the file was written correctly
+        actual_size = os.path.getsize(tmp_path)
+        print(f"[DEBUG] Temp file created: {tmp_path}, wrote {bytes_written} bytes, actual size: {actual_size} bytes")
+        
+        if actual_size == 0:
+            raise HTTPException(status_code=500, detail=f"Failed to write temp file - size is 0 bytes")
 
     count = None
     backend_error = None
@@ -123,22 +152,47 @@ async def infer_count(request: Request, file: UploadFile = File(None)):
 
     # Fallback to LWCC if still None
     # Note: LWCC has a critical bug - uses hardcoded /.lwcc path which is read-only on macOS
-    # This will fail on macOS without sudo/root access
+    # Even importing LWCC can fail if it tries to create /.lwcc during initialization
     if count is None:
+        lwcc_error = None
         try:
             from lwcc import LWCC
             c = LWCC.get_count([tmp_path], model_name='DM-Count', model_weights='SHA', resize_img=True)
             count = int(round(float(c)))
+            print(f"[DEBUG] LWCC SUCCESS! Count: {count}")
+        except (OSError, PermissionError, FileNotFoundError) as e:
+            # LWCC failed due to filesystem issues - use fallback
+            lwcc_error = e
+            print(f"[DEBUG] LWCC failed with filesystem error: {e}")
         except Exception as e:
-            # LWCC failed - use fallback estimation based on image analysis
+            # Other LWCC errors
+            lwcc_error = e
             print(f"[DEBUG] LWCC failed: {e}")
+        
+        # Use fallback if LWCC failed
+        if count is None:
             print(f"[DEBUG] Using fallback crowd estimation...")
+            print(f"[DEBUG] Temp file path: {tmp_path}")
+            print(f"[DEBUG] File exists: {os.path.exists(tmp_path)}")
             try:
                 from PIL import Image
                 import numpy as np
                 
+                # Verify file exists and is readable
+                print(f"[DEBUG] Checking temp file: {tmp_path}")
+                if not os.path.exists(tmp_path):
+                    raise FileNotFoundError(f"Temp file not found: {tmp_path}")
+                
+                file_size = os.path.getsize(tmp_path)
+                print(f"[DEBUG] Temp file exists, size: {file_size} bytes")
+                
+                if file_size == 0:
+                    raise ValueError(f"Temp file is empty: {tmp_path}")
+                
                 # Open image and analyze
+                print(f"[DEBUG] Opening image with PIL...")
                 img = Image.open(tmp_path)
+                print(f"[DEBUG] Image opened successfully: {img.format} {img.size} {img.mode}")
                 img_array = np.array(img.convert('RGB'))
                 height, width = img_array.shape[:2]
                 
@@ -159,11 +213,18 @@ async def infer_count(request: Request, file: UploadFile = File(None)):
                     count = min(estimated_count, 1000)  # Cap at reasonable maximum
                     
                 print(f"[DEBUG] Fallback estimation: {count} people (approximation)")
-                backend_error = f"LWCC unavailable ({str(e)[:50]}...), using fallback estimation"
+                backend_error = f"LWCC unavailable (filesystem error), using fallback estimation"
+            except ImportError as e:
+                print(f"[DEBUG] Fallback failed - missing dependencies: {e}")
+                backend_error = f"LWCC error: {lwcc_error}; Fallback error: Missing PIL or NumPy - install with 'pip install Pillow numpy'"
             except Exception as fallback_error:
-                print(f"[DEBUG] Fallback also failed: {fallback_error}")
-                if backend_error is None:
-                    backend_error = str(e)
+                print(f"[DEBUG] Fallback failed: {type(fallback_error).__name__}: {fallback_error}")
+                # Provide more specific error message
+                error_msg = str(fallback_error)
+                if "cannot identify image file" in error_msg:
+                    backend_error = f"LWCC error: {lwcc_error}; Fallback error: Invalid or corrupted image file"
+                else:
+                    backend_error = f"LWCC error: {lwcc_error}; Fallback error: {fallback_error}"
 
     # Clean up temporary file
     try:

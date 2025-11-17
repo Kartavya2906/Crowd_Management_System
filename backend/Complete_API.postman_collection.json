@@ -2270,7 +2270,7 @@
     },
     {
       "name": "Inference",
-      "description": "⚠️ IMPORTANT: Crowd counting endpoint requires LWCC library. Due to LWCC path issues on macOS, this may not work without workarounds. See backend/LWCC_ISSUE_WORKAROUND.md for details.",
+      "description": "✅ Crowd counting with automatic fallback. Works on macOS/Linux. ⚠️ Windows users: May need Python/PIL/NumPy installed. See INFERENCE_FIX_SUMMARY.md for details.",
       "item": [
         {
           "name": "Count People (Upload Image)",
@@ -2282,7 +2282,7 @@
               "formdata": [
                 {
                   "key": "file",
-                  "description": "⚠️ Select an image file. IMPORTANT: This endpoint requires LWCC library setup. See LWCC_ISSUE_WORKAROUND.md for details.",
+                  "description": "✅ Select a crowd image. Works on macOS/Linux. Windows: Ensure Python, PIL & NumPy installed.",
                   "type": "file",
                   "src": []
                 },

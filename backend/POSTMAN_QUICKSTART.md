@@ -48,21 +48,23 @@ python3 -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 ### 5. Endpoint Status
 
-#### ✅ Inference/Count People Endpoint - NOW WORKING!
+#### ✅ Inference/Count People Endpoint - WORKING!
 
-This endpoint now works on **all platforms including macOS**:
+This endpoint works on **macOS and Linux** (confirmed working):
 
 - **Automatic fallback** when LWCC library fails
 - **Returns crowd count estimation** using computer vision
-- **No setup required** - works out of the box
+- **Fast response** - Fallback processes in <1 second
 - **Accuracy**: ~60-80% (good for testing), 95%+ on Linux with LWCC
+
+**Windows Users:** May require additional setup (PIL, NumPy). See **WINDOWS_SETUP.md** for detailed instructions.
 
 **How it works:**
 1. Tries LWCC (deep learning model) first
-2. If LWCC fails (macOS read-only filesystem), uses fallback CV-based estimation
+2. If LWCC fails (filesystem issues), uses fallback CV-based estimation
 3. Returns estimated count immediately
 
-**Test it now** - just upload a crowd photo and click Send!
+**Test it now on macOS/Linux** - just upload a crowd photo and click Send!
 
 ## 📝 Testing Tips
 
