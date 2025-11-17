@@ -56,7 +56,7 @@ class CrowdBuddyAppState extends State<CrowdBuddyApp> {
         EventListPage.route: (_) => const EventListPage(),
         CrowdDashboard.route: (_) => const CrowdDashboard(),
         LostPersonForm.route: (_) => const LostPersonForm(),
-        MedicalHelpPage.route: (_) => const MedicalHelpPage(),
+        MedicalHelpPage.route: (context) => const MedicalHelpPage(),
         EmergencyExitPage.route: (_) => const EmergencyExitPage(),
         FeedbackPage.route: (_) => const FeedbackPage(),
         LiveMapPage.route: (_) => const LiveMapPage(),

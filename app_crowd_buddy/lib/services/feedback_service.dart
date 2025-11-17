@@ -1,41 +1,31 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../utils/constants.dart';
 
-class LostPersonService {
-  // Submit lost person report
-  Future<Map<String, dynamic>> submitLostPersonReport({
-    required String reporterId,
-    required String reporterName,
-    required String reporterPhone,
-    required String lostPersonName,
-    required int age,
-    required String gender,
-    required String description,
-    required String lastSeenLocation,
-    required String lastSeenTime,
+class FeedbackService {
+  // Submit feedback (handles all 3 cases: rating only, positive, negative)
+  Future<Map<String, dynamic>> submitFeedback({
+    required String userId,
     required String eventId,
-    File? photo, // Keep parameter but ignore for now
+    required int rating,
+    String? comments, // Optional - can be null for rating-only feedback
   }) async {
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}/lost-persons/');
-      print('🌐 API URL: $url');
+      final url = Uri.parse('${ApiConstants.baseUrl}/feedback/');
+      print('🌐 Feedback API URL: $url');
 
       final Map<String, dynamic> requestBody = {
-        'reporter_id': reporterId,
-        'reporter_name': reporterName,
-        'reporter_phone': reporterPhone,
-        'name': lostPersonName,
-        'age': age,
-        'gender': gender.toLowerCase(),
-        'description': description,
-        'last_seen_location': lastSeenLocation,
-        'last_seen_time': lastSeenTime,
+        'user_id': userId,
         'event_id': eventId,
+        'rating': rating,
       };
 
-      print('📋 Request Body: $requestBody');
+      // Only add comments if provided (not null or empty)
+      if (comments != null && comments.isNotEmpty) {
+        requestBody['comments'] = comments;
+      }
+
+      print('📋 Feedback Request Body: $requestBody');
 
       final response = await http.post(
         url,
@@ -54,7 +44,7 @@ class LostPersonService {
         return {
           'success': true,
           'data': responseData,
-          'message': 'Lost person report submitted successfully',
+          'message': 'Feedback submitted successfully',
         };
       } else {
         print('❌ Error: Status ${response.statusCode}');
@@ -62,7 +52,7 @@ class LostPersonService {
 
         return {
           'success': false,
-          'message': 'Failed to submit report: ${response.body}',
+          'message': 'Failed to submit feedback: ${response.body}',
         };
       }
     } catch (e) {

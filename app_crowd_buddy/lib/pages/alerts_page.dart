@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import '../models/alert_model.dart';
+import '../services/alert_service.dart';
 
 class AlertsPage extends StatefulWidget {
   static const route = '/alerts';
@@ -9,39 +12,64 @@ class AlertsPage extends StatefulWidget {
 }
 
 class _AlertsPageState extends State<AlertsPage> {
-  final alerts = [
-    {
-      'title': 'Overcrowding near Gate A',
-      'time': '2 min ago',
-      'severity': 'high',
-      'icon': Icons.people,
-      'description': 'High crowd density detected. Use alternative exits.',
-    },
-    {
-      'title': 'Medical SOS reported',
-      'time': '10 min ago',
-      'severity': 'critical',
-      'icon': Icons.local_hospital,
-      'description': 'Emergency services dispatched to Section B.',
-    },
-    {
-      'title': 'Weather alert: Heavy rain',
-      'time': '30 min ago',
-      'severity': 'medium',
-      'icon': Icons.cloud,
-      'description': 'Thunderstorm expected in 45 minutes. Seek shelter.',
-    },
-    {
-      'title': 'Lost child found',
-      'time': '1 hour ago',
-      'severity': 'low',
-      'icon': Icons.child_care,
-      'description': 'Child reunited with parents at Info Desk.',
-    },
-  ];
+  final AlertService _alertService = AlertService();
+  List<Alert> _alerts = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlerts();
+  }
+
+  Future<void> _loadAlerts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final alerts = await _alertService.fetchAlerts();
+      setState(() {
+        _alerts = alerts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Map<String, int> _getAlertStats() {
+    int critical = 0;
+    int high = 0;
+    int medium = 0;
+
+    for (var alert in _alerts) {
+      if (!alert.isActive) continue;
+
+      switch (alert.severity.toLowerCase()) {
+        case 'critical':
+          critical++;
+          break;
+        case 'high':
+          high++;
+          break;
+        case 'medium':
+        case 'low':
+          medium++;
+          break;
+      }
+    }
+
+    return {'critical': critical, 'high': high, 'medium': medium};
+  }
 
   Color _getSeverityColor(String severity) {
-    switch (severity) {
+    switch (severity.toLowerCase()) {
       case 'critical':
         return Colors.red;
       case 'high':
@@ -56,7 +84,7 @@ class _AlertsPageState extends State<AlertsPage> {
   }
 
   String _getSeverityLabel(String severity) {
-    switch (severity) {
+    switch (severity.toLowerCase()) {
       case 'critical':
         return 'CRITICAL';
       case 'high':
@@ -66,7 +94,7 @@ class _AlertsPageState extends State<AlertsPage> {
       case 'low':
         return 'INFO';
       default:
-        return '';
+        return severity.toUpperCase();
     }
   }
 
@@ -74,6 +102,7 @@ class _AlertsPageState extends State<AlertsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final stats = _getAlertStats();
 
     return Scaffold(
       body: CustomScrollView(
@@ -111,6 +140,12 @@ class _AlertsPageState extends State<AlertsPage> {
                 ),
               ),
             ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _loadAlerts,
+              ),
+            ],
           ),
 
           // Alert Stats
@@ -122,7 +157,7 @@ class _AlertsPageState extends State<AlertsPage> {
                   Expanded(
                     child: _buildStatCard(
                       'Critical',
-                      '1',
+                      stats['critical'].toString(),
                       Colors.red,
                       Icons.warning,
                       isDark,
@@ -132,7 +167,7 @@ class _AlertsPageState extends State<AlertsPage> {
                   Expanded(
                     child: _buildStatCard(
                       'High',
-                      '1',
+                      stats['high'].toString(),
                       Colors.orange,
                       Icons.error_outline,
                       isDark,
@@ -142,7 +177,7 @@ class _AlertsPageState extends State<AlertsPage> {
                   Expanded(
                     child: _buildStatCard(
                       'Medium',
-                      '1',
+                      stats['medium'].toString(),
                       Colors.amber,
                       Icons.info_outline,
                       isDark,
@@ -153,35 +188,104 @@ class _AlertsPageState extends State<AlertsPage> {
             ),
           ),
 
-          // Alerts List
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                  final alert = alerts[index];
-                  return TweenAnimationBuilder<double>(
-                    duration: Duration(milliseconds: 300 + (index * 100)),
-                    tween: Tween(begin: 0.0, end: 1.0),
-                    builder: (context, value, child) {
-                      return Transform.translate(
-                        offset: Offset(0, 20 * (1 - value)),
-                        child: Opacity(
-                          opacity: value,
-                          child: child,
+          // Loading / Error / Alerts List
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_errorMessage != null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading alerts',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: _loadAlerts,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_alerts.isEmpty)
+              const SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 64,
+                        color: Colors.green,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'No active alerts',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text('Everything is running smoothly!'),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                      final alert = _alerts[index];
+                      return TweenAnimationBuilder(
+                        duration: Duration(milliseconds: 300 + (index * 100)),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 20 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildAlertCard(alert, isDark, theme),
                         ),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildAlertCard(alert, isDark, theme),
-                    ),
-                  );
-                },
-                childCount: alerts.length,
+                    childCount: _alerts.length,
+                  ),
+                ),
               ),
-            ),
-          ),
 
           const SliverToBoxAdapter(
             child: SizedBox(height: 16),
@@ -253,9 +357,9 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  Widget _buildAlertCard(
-      Map<String, dynamic> alert, bool isDark, ThemeData theme) {
-    final color = _getSeverityColor(alert['severity']);
+  Widget _buildAlertCard(Alert alert, bool isDark, ThemeData theme) {
+    final color = _getSeverityColor(alert.severity);
+    final timeAgo = timeago.format(alert.createdAt);
 
     return Container(
       decoration: BoxDecoration(
@@ -318,7 +422,7 @@ class _AlertsPageState extends State<AlertsPage> {
                         ],
                       ),
                       child: Icon(
-                        alert['icon'],
+                        Alert.getIconForType(alert.alertType),
                         color: Colors.white,
                         size: 24,
                       ),
@@ -332,7 +436,7 @@ class _AlertsPageState extends State<AlertsPage> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  alert['title']!,
+                                  alert.title,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -348,7 +452,7 @@ class _AlertsPageState extends State<AlertsPage> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  _getSeverityLabel(alert['severity']),
+                                  _getSeverityLabel(alert.severity),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -365,17 +469,35 @@ class _AlertsPageState extends State<AlertsPage> {
                               Icon(
                                 Icons.access_time,
                                 size: 14,
-                                color:
-                                theme.colorScheme.onSurface.withOpacity(0.6),
+                                color: theme.colorScheme.onSurface.withOpacity(0.6),
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                alert['time']!,
+                                timeAgo,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withOpacity(0.6),
+                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                                 ),
                               ),
+                              const SizedBox(width: 12),
+                              if (!alert.isActive)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'INACTIVE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ],
@@ -385,7 +507,7 @@ class _AlertsPageState extends State<AlertsPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  alert['description']!,
+                  alert.message,
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 12),
@@ -412,7 +534,7 @@ class _AlertsPageState extends State<AlertsPage> {
     );
   }
 
-  void _showAlertDetails(Map<String, dynamic> alert, Color color) {
+  void _showAlertDetails(Alert alert, Color color) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -434,12 +556,16 @@ class _AlertsPageState extends State<AlertsPage> {
                       color: color.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(alert['icon'], color: color, size: 32),
+                    child: Icon(
+                      Alert.getIconForType(alert.alertType),
+                      color: color,
+                      size: 32,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      alert['title']!,
+                      alert.title,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -449,8 +575,27 @@ class _AlertsPageState extends State<AlertsPage> {
               ),
               const SizedBox(height: 16),
               Text(
-                alert['description']!,
+                alert.message,
                 style: theme.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Type: ${alert.alertType}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              Text(
+                'Severity: ${alert.severity}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              Text(
+                'Status: ${alert.isActive ? "Active" : "Inactive"}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
               ),
               const SizedBox(height: 24),
               Row(

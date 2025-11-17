@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // Needed for opening maps and dialer
+import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/constants.dart';
 
 class MedicalHelpPage extends StatefulWidget {
   static const route = '/medical';
+
   const MedicalHelpPage({super.key});
 
   @override
@@ -10,6 +15,70 @@ class MedicalHelpPage extends StatefulWidget {
 }
 
 class _MedicalHelpPageState extends State<MedicalHelpPage> {
+  List<MedicalFacility> _facilities = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  String? eventId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEventIdAndFetchData();
+  }
+
+  Future<void> _loadEventIdAndFetchData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      eventId = prefs.getString('current_event_id');
+
+      if (eventId != null && eventId!.isNotEmpty) {
+        await _fetchMedicalData();
+      } else {
+        setState(() {
+          _errorMessage = 'No event selected. Please select an event first.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading event: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchMedicalData() async {
+    try {
+      final url = '${ApiConstants.baseUrl}/medical-facilities/?event_id=$eventId';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        setState(() {
+          // Only get first-aid and clinic facilities
+          _facilities = data
+              .where((item) => item['facility_type'] == 'first-aid' ||
+              item['facility_type'] == 'clinic')
+              .map((item) => MedicalFacility.fromJson(item))
+              .toList();
+
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load medical facilities (Status: ${response.statusCode})';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -18,7 +87,6 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Gradient AppBar
           SliverAppBar(
             expandedHeight: 120,
             floating: false,
@@ -52,18 +120,41 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
-            child: Padding(
+            child: _isLoading
+                ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+                : _errorMessage != null
+                ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+                : Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // INFO CARD REMOVED
-
-                  // LOCATION AND SOS REMOVED
-
-                  // Nearby Facilities
                   Text(
                     'Nearby Medical Facilities',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -71,56 +162,17 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildFacilityCard(
-                    context,
-                    name: 'City Hospital',
-                    distance: '0.5 km away',
-                    phone: '+91 99999 00000',
-                    address: 'City Hospital, New Delhi',
-                    icon: Icons.local_hospital,
-                    color: Colors.blue,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFacilityCard(
-                    context,
-                    name: 'Medical Center',
-                    distance: '1.2 km away',
-                    phone: '+91 88888 77777',
-                    address: 'Medical Center, New Delhi',
-                    icon: Icons.medical_services,
-                    color: Colors.purple,
-                    isDark: isDark,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Emergency Contacts
-                  Text(
-                    'Emergency Contacts',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildContactCard(
-                    context,
-                    name: 'Ambulance',
-                    number: '108',
-                    icon: Icons.emergency,
-                    color: Colors.red,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildContactCard(
-                    context,
-                    name: 'Event Medical Team',
-                    number: '+91 98765 43210',
-                    icon: Icons.phone,
-                    color: Colors.green,
-                    isDark: isDark,
-                  ),
-
+                  if (_facilities.isEmpty)
+                    const Text('No medical facilities available')
+                  else
+                    ..._facilities.map((facility) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildFacilityCard(
+                        context,
+                        facility: facility,
+                        isDark: isDark,
+                      ),
+                    )),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -131,22 +183,19 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
     );
   }
 
-  // Facilitiy Card with map and phone integration
   Widget _buildFacilityCard(
       BuildContext context, {
-        required String name,
-        required String distance,
-        required String phone,
-        required String address,
-        required IconData icon,
-        required Color color,
+        required MedicalFacility facility,
         required bool isDark,
       }) {
     final theme = Theme.of(context);
+    final color = facility.facilityType == 'first-aid' ? Colors.blue : Colors.purple;
+    final icon = facility.facilityType == 'first-aid'
+        ? Icons.local_hospital
+        : Icons.medical_services;
 
-    // Retrieve Maps url with place name or address
-    String mapUrl =
-    Uri.encodeFull('https://www.google.com/maps/search/?api=1&query=$address');
+    String mapUrl = Uri.encodeFull(
+        'https://www.google.com/maps/search/?api=1&query=${facility.address}');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -183,14 +232,14 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  facility.facilityName,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  distance,
+                  facility.address,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),
@@ -198,13 +247,13 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
                 const SizedBox(height: 4),
                 GestureDetector(
                   onTap: () async {
-                    final uri = Uri.parse('tel:$phone');
+                    final uri = Uri.parse('tel:${facility.contactNumber}');
                     if (await canLaunchUrl(uri)) {
                       await launchUrl(uri);
                     }
                   },
                   child: Text(
-                    phone,
+                    facility.contactNumber,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: color,
                       fontWeight: FontWeight.bold,
@@ -215,9 +264,8 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
               ],
             ),
           ),
-          // This IconButton handles opening Google Maps
           IconButton(
-            icon: Icon(Icons.directions, color: color), // The "arrow" icon
+            icon: Icon(Icons.directions, color: color),
             onPressed: () async {
               final uri = Uri.parse(mapUrl);
               if (await canLaunchUrl(uri)) {
@@ -229,80 +277,36 @@ class _MedicalHelpPageState extends State<MedicalHelpPage> {
       ),
     );
   }
+}
 
-  // Contact Card with call integration
-  Widget _buildContactCard(
-      BuildContext context, {
-        required String name,
-        required String number,
-        required IconData icon,
-        required Color color,
-        required bool isDark,
-      }) {
-    final theme = Theme.of(context);
+class MedicalFacility {
+  final String eventId;
+  final String facilityName;
+  final String facilityType;
+  final String contactNumber;
+  final String address;
+  final String id;
+  final String createdAt;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: isDark
-              ? [
-            color.withOpacity(0.2),
-            color.withOpacity(0.1),
-          ]
-              : [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
-          ],
-        ),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  number,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // This IconButton handles opening the dialer
-          IconButton(
-            icon: Icon(Icons.call, color: color), // The "phone" icon
-            onPressed: () async {
-              final uri = Uri.parse('tel:$number');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              }
-            },
-          ),
-        ],
-      ),
+  MedicalFacility({
+    required this.eventId,
+    required this.facilityName,
+    required this.facilityType,
+    required this.contactNumber,
+    required this.address,
+    required this.id,
+    required this.createdAt,
+  });
+
+  factory MedicalFacility.fromJson(Map<String, dynamic> json) {
+    return MedicalFacility(
+      eventId: json['event_id'] ?? '',
+      facilityName: json['facility_name'] ?? '',
+      facilityType: json['facility_type'] ?? '',
+      contactNumber: json['contact_number'] ?? '',
+      address: json['address'] ?? '',
+      id: json['id'] ?? '',
+      createdAt: json['created_at'] ?? '',
     );
   }
 }

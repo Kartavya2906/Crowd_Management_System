@@ -77,6 +77,13 @@ class _LostPersonFormState extends State<LostPersonForm> {
         _contactNumber.text = prefs.getString('user_phone') ?? '';
       }
     });
+
+    // Debug print to verify data is loaded
+    print('Loaded user data:');
+    print('_userId: $_userId');
+    print('_eventId: $_eventId');
+    print('Reporter name: ${_reporterName.text}');
+    print('Reporter phone: ${_contactNumber.text}');
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -137,6 +144,210 @@ class _LostPersonFormState extends State<LostPersonForm> {
     }
   }
 
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      // if (_imageFile == null) {
+      //   _showErrorSnackBar('Please upload a photo of the lost person.');
+      //   return;
+      // }
+
+      if (_selectedTime == null) {
+        _showErrorSnackBar('Please select the last seen time.');
+        return;
+      }
+
+      // Check if userId and eventId are available from SharedPreferences
+      if (_userId == null || _userId!.isEmpty) {
+        _showErrorSnackBar('User ID is missing. Please log in again.');
+        return;
+      }
+
+      if (_eventId == null || _eventId!.isEmpty) {
+        _showErrorSnackBar('Event ID is missing. Please select an event.');
+        return;
+      }
+
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      // Format time as HH:MM
+      final formattedTime =
+          '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+
+      try {
+        print('Submitting with userId: $_userId, eventId: $_eventId');
+
+        final result = await _lostPersonService.submitLostPersonReport(
+          reporterId: _userId!,
+          reporterName: _reporterName.text.trim(),
+          reporterPhone: _contactNumber.text.trim(),
+          lostPersonName: _lostPersonName.text.trim(),
+          age: int.parse(_age.text.trim()),
+          gender: _selectedGender,
+          description: _description.text.trim(),
+          lastSeenLocation: _lastSeenLocation.text.trim(),
+          lastSeenTime: formattedTime,
+          eventId: _eventId!,
+          photo: _imageFile,
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        if (result['success'] == true) {
+          // Show success dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.green.shade600,
+                        size: 48,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Report Submitted',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      result['message'] ??
+                          'Your lost person report has been submitted successfully.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (result['data'] != null && result['data']['id'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Report ID: ${result['data']['id']}',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close dialog
+                          Navigator.of(context).pop(); // Close form
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade600,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        } else {
+          // Show error message
+          _showErrorSnackBar(result['message'] ??
+              'Failed to submit report. Please try again.');
+        }
+      } catch (e) {
+        print('Error in _submitForm: $e');
+        if (!mounted) return;
+
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        _showErrorSnackBar('An unexpected error occurred: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  String? _req(String? v) =>
+      (v == null || v.trim().isEmpty) ? 'This field is required' : null;
+
+  String? _validateAge(String? v) {
+    if (v == null || v.trim().isEmpty) {
+      return 'Age is required';
+    }
+
+    final age = int.tryParse(v.trim());
+    if (age == null || age <= 0 || age > 150) {
+      return 'Please enter a valid age';
+    }
+
+    return null;
+  }
+
+  @override
+  void dispose() {
+    _reporterName.dispose();
+    _contactNumber.dispose();
+    _lostPersonName.dispose();
+    _age.dispose();
+    _description.dispose();
+    _lastSeenLocation.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -145,7 +356,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Gradient AppBar
+          // App Bar
           SliverAppBar(
             expandedHeight: 120,
             floating: false,
@@ -293,7 +504,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Reporter Information Section
+                    // Reporter Information
                     _buildSectionHeader('Reporter Information', isDark),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -314,7 +525,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Lost Person Details Section
+                    // Lost Person Details
                     _buildSectionHeader('Lost Person Details', isDark),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -398,7 +609,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Last Seen Details Section
+                    // Last Seen Details
                     _buildSectionHeader('Last Seen Details', isDark),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -410,7 +621,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Last Seen Time
+                    // Time Picker
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
@@ -456,7 +667,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Warning Message
+                    // Warning
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -622,205 +833,5 @@ class _LostPersonFormState extends State<LostPersonForm> {
         maxLines: maxLines,
       ),
     );
-  }
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      if (_imageFile == null) {
-        _showErrorSnackBar('Please upload a photo of the lost person.');
-        return;
-      }
-
-      if (_selectedTime == null) {
-        _showErrorSnackBar('Please select the last seen time.');
-        return;
-      }
-
-      // Check if userId and eventId are available from SharedPreferences
-      if (_userId == null || _userId!.isEmpty) {
-        _showErrorSnackBar('User ID is missing. Please log in again.');
-        return;
-      }
-
-      if (_eventId == null || _eventId!.isEmpty) {
-        _showErrorSnackBar('Event ID is missing. Please select an event.');
-        return;
-      }
-
-      setState(() {
-        _isSubmitting = true;
-      });
-
-      // Format time as HH:MM
-      final formattedTime =
-          '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
-
-      try {
-        final result = await _lostPersonService.submitLostPersonReport(
-          reporterId: _userId!,  // Using SharedPreferences value
-          reporterName: _reporterName.text.trim(),
-          reporterPhone: _contactNumber.text.trim(),
-          lostPersonName: _lostPersonName.text.trim(),
-          age: int.parse(_age.text.trim()),
-          gender: _selectedGender,
-          description: _description.text.trim(),
-          lastSeenLocation: _lastSeenLocation.text.trim(),
-          lastSeenTime: formattedTime,
-          eventId: _eventId!,  // Using SharedPreferences value
-          photo: _imageFile,
-        );
-
-        if (!mounted) return;
-
-        setState(() {
-          _isSubmitting = false;
-        });
-
-        if (result['success'] == true) {
-          // Show success dialog
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.check_circle,
-                        color: Colors.green.shade600,
-                        size: 48,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Report Submitted',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      result['message'] ??
-                          'Your lost person report has been submitted successfully.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (result['data'] != null && result['data']['id'] != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          'Report ID: ${result['data']['id']}',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 12,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Close dialog
-                          Navigator.of(context).pop(); // Close form
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange.shade600,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'OK',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        } else {
-          // Show error message
-          _showErrorSnackBar(result['message'] ??
-              'Failed to submit report. Please try again.');
-        }
-      } catch (e) {
-        if (!mounted) return;
-
-        setState(() {
-          _isSubmitting = false;
-        });
-
-        _showErrorSnackBar('An unexpected error occurred: ${e.toString()}');
-      }
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-
-  String? _req(String? v) =>
-      (v == null || v.trim().isEmpty) ? 'This field is required' : null;
-
-  String? _validateAge(String? v) {
-    if (v == null || v.trim().isEmpty) {
-      return 'Age is required';
-    }
-
-    final age = int.tryParse(v.trim());
-    if (age == null || age <= 0 || age > 150) {
-      return 'Please enter a valid age';
-    }
-
-    return null;
-  }
-
-  @override
-  void dispose() {
-    _reporterName.dispose();
-    _contactNumber.dispose();
-    _lostPersonName.dispose();
-    _age.dispose();
-    _description.dispose();
-    _lastSeenLocation.dispose();
-    super.dispose();
   }
 }

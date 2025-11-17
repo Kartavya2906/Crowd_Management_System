@@ -7,13 +7,16 @@ import 'feedback_page.dart';
 import 'lost_person_form.dart';
 import 'alerts_page.dart';
 import 'live_map_page.dart';
-// Import your WashroomsPage here
 import 'washrooms_page.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+// Add these imports
+import '../services/crowd_density_service.dart';
+import '../models/crowd_density.dart';
 
 class CrowdDashboard extends StatefulWidget {
   static const route = '/dashboard';
+
   const CrowdDashboard({super.key});
 
   @override
@@ -25,13 +28,11 @@ class _CrowdDashboardState extends State<CrowdDashboard>
   late AnimationController _animationController;
   int _selectedIndex = 0;
 
-  // Mock data for zones
-  final List<Map<String, dynamic>> _zoneData = [
-    {'zone': 'Zone A', 'area': 'Main Stage Front', 'density': 0.92},
-    {'zone': 'Zone B', 'area': 'Food Court Area', 'density': 0.65},
-    {'zone': 'Zone C', 'area': 'North Entrance', 'density': 0.24},
-    {'zone': 'Zone D', 'area': 'Merch Stalls', 'density': 0.45},
-  ];
+  // Replace mock data with real data
+  final CrowdDensityService _crowdDensityService = CrowdDensityService();
+  List<CrowdDensity> _densityData = [];
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -41,6 +42,31 @@ class _CrowdDashboardState extends State<CrowdDashboard>
       vsync: this,
     );
     _animationController.forward();
+
+    // Fetch crowd density data
+    _fetchCrowdDensity();
+  }
+
+  Future<void> _fetchCrowdDensity() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final latestData = await _crowdDensityService.fetchLatestDensityByArea();
+
+      setState(() {
+        _densityData = latestData.values.toList()
+          ..sort((a, b) => b.peoplePerM2.compareTo(a.peoplePerM2));
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load crowd density data';
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -49,18 +75,20 @@ class _CrowdDashboardState extends State<CrowdDashboard>
     super.dispose();
   }
 
-  // Helper to get the status label
-  String _getDensityStatus(double density) {
-    if (density >= 0.8) return 'Overcrowded';
-    if (density >= 0.5) return 'Moderate';
-    return 'Safe';
-  }
-
-  // Helper to get the status color
-  Color _getDensityColor(double density) {
-    if (density >= 0.8) return Colors.red.shade600;
-    if (density >= 0.5) return Colors.orange.shade700;
-    return Colors.green.shade600;
+  // Helper to get the status color based on API's density_level
+  Color _getDensityColor(String densityLevel) {
+    switch (densityLevel.toLowerCase()) {
+      case 'safe':
+        return Colors.green.shade600;
+      case 'moderate':
+        return Colors.orange.shade700;
+      case 'risky':
+      case 'overcrowded':
+      case 'crowded':
+        return Colors.red.shade600;
+      default:
+        return Colors.grey.shade600;
+    }
   }
 
   @override
@@ -105,7 +133,6 @@ class _CrowdDashboardState extends State<CrowdDashboard>
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: FadeTransition(
               opacity: _animationController,
@@ -152,17 +179,22 @@ class _CrowdDashboardState extends State<CrowdDashboard>
                                   userAgentPackageName:
                                   'com.example.crowd_buddy',
                                 ),
+                                // Show circles for each area on map
                                 CircleLayer(
-                                  circles: [
-                                    CircleMarker(
-                                      point: LatLng(28.6139, 77.2090),
-                                      radius: 200,
+                                  circles: _densityData.map((density) {
+                                    return CircleMarker(
+                                      point: LatLng(
+                                        density.location.lat,
+                                        density.location.lon,
+                                      ),
+                                      radius: density.radiusM,
                                       useRadiusInMeter: true,
-                                      color: Colors.blue.withOpacity(0.2),
-                                      borderColor: Colors.blue,
+                                      color: _getDensityColor(density.densityLevel)
+                                          .withOpacity(0.3),
+                                      borderColor: _getDensityColor(density.densityLevel),
                                       borderStrokeWidth: 2,
-                                    ),
-                                  ],
+                                    );
+                                  }).toList(),
                                 ),
                               ],
                             ),
@@ -207,24 +239,54 @@ class _CrowdDashboardState extends State<CrowdDashboard>
                   Section(
                     title: 'Zone Density Status',
                     icon: Icons.analytics_outlined,
-                    child: Column(
-                      children: _zoneData.map((data) {
+                    child: _isLoading
+                        ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                        : _errorMessage != null
+                        ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: Colors.red.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: _fetchCrowdDensity,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                        : _densityData.isEmpty
+                        ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text('No crowd density data available'),
+                      ),
+                    )
+                        : Column(
+                      children: _densityData.map((density) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12.0),
-                          child: _buildZoneCard(
-                            context,
-                            data['zone'],
-                            data['area'],
-                            data['density'],
-                          ),
+                          child: _buildZoneCard(context, density),
                         );
                       }).toList(),
                     ),
                   ),
 
-                  // Emergency & Facilities Actions Section
+                  // Quick Actions Section
                   Section(
-                    title: 'Quick Actions', // Renamed for broader scope
+                    title: 'Quick Actions',
                     icon: Icons.bolt_rounded,
                     child: Row(
                       children: [
@@ -250,7 +312,6 @@ class _CrowdDashboardState extends State<CrowdDashboard>
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // NEW Washroom Button
                         Expanded(
                           child: _buildActionButton(
                             context,
@@ -312,13 +373,11 @@ class _CrowdDashboardState extends State<CrowdDashboard>
     );
   }
 
-  // Widget for Individual Zone Cards
-  Widget _buildZoneCard(
-      BuildContext context, String zone, String area, double density) {
+  // Widget for Individual Zone Cards - Uses API data
+  Widget _buildZoneCard(BuildContext context, CrowdDensity density) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final densityColor = _getDensityColor(density);
-    final statusLabel = _getDensityStatus(density);
+    final densityColor = _getDensityColor(density.densityLevel);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -341,26 +400,28 @@ class _CrowdDashboardState extends State<CrowdDashboard>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    zone,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                      fontSize: 16,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      density.areaName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    area,
-                    style: TextStyle(
-                      color: theme.textTheme.bodySmall?.color,
-                      fontSize: 13,
+                    const SizedBox(height: 4),
+                    Text(
+                      '${density.personCount} people',
+                      style: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
+                        fontSize: 13,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               Container(
                 padding:
@@ -370,7 +431,7 @@ class _CrowdDashboardState extends State<CrowdDashboard>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  statusLabel,
+                  density.densityLevel,
                   style: TextStyle(
                     color: densityColor,
                     fontWeight: FontWeight.bold,
@@ -384,9 +445,9 @@ class _CrowdDashboardState extends State<CrowdDashboard>
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: density,
+              value: (density.peoplePerM2 / 1.0).clamp(0.0, 1.0),
               backgroundColor: densityColor.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(densityColor),
+              valueColor: AlwaysStoppedAnimation(densityColor),
               minHeight: 8,
             ),
           ),
@@ -395,7 +456,7 @@ class _CrowdDashboardState extends State<CrowdDashboard>
     );
   }
 
-  // Renamed to generic '_buildActionButton' as it now includes non-emergency items
+  // Action Button Widget
   Widget _buildActionButton(
       BuildContext context,
       IconData icon,

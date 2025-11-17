@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignupPage extends StatefulWidget {
   static const route = '/signup';
@@ -68,7 +69,46 @@ class _SignupPageState extends State<SignupPage> with SingleTickerProviderStateM
         throw Exception(backendResult['message']);
       }
 
-      // Step 2: Create Firebase user
+      // Step 2: Save backend user data to SharedPreferences
+      print('💾 Saving user data to SharedPreferences...');
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save backend user_id and event_id from the response
+      if (backendResult['data'] != null) {
+        final userData = backendResult['data'];
+
+        // Save user_id (adjust key name based on your backend response)
+        if (userData['id'] != null) {
+          await prefs.setString('user_id', userData['id'].toString());
+          print('Saved user_id: ${userData['id']}');
+        } else if (userData['user_id'] != null) {
+          await prefs.setString('user_id', userData['user_id'].toString());
+          print('Saved user_id: ${userData['user_id']}');
+        }
+
+        // Save event_id if provided by backend
+        if (userData['event_id'] != null) {
+          await prefs.setString('event_id', userData['event_id'].toString());
+          print('Saved event_id: ${userData['event_id']}');
+        } else {
+          // Use default if backend doesn't provide event_id
+          await prefs.setString('event_id', 'default_event_id');
+          print('Saved default event_id');
+        }
+
+        // Save user name
+        await prefs.setString('user_name', _nameController.text.trim());
+
+        // Save user email
+        await prefs.setString('user_email', _emailController.text.trim());
+
+        // Save user phone
+        await prefs.setString('user_phone', _phoneController.text.trim());
+
+        print('✅ User data saved to SharedPreferences');
+      }
+
+      // Step 3: Create Firebase user
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/feedback_service.dart';
 
 class FeedbackPage extends StatefulWidget {
   static const route = '/feedback';
@@ -10,9 +12,146 @@ class FeedbackPage extends StatefulWidget {
 
 class _FeedbackPageState extends State<FeedbackPage> {
   final _formKey = GlobalKey<FormState>();
-  final _feedback = TextEditingController();
+  final _feedbackController = TextEditingController();
+  final _feedbackService = FeedbackService();
+
   int _rating = 0;
   String _category = 'General';
+  bool _isSubmitting = false;
+
+  String? _userId;
+  String? _eventId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('user_id');
+      _eventId = prefs.getString('event_id');
+    });
+
+    print('📋 Loaded User Data:');
+    print('   user_id: $_userId');
+    print('   event_id: $_eventId');
+  }
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitFeedback() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_rating == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please provide a rating'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.orange,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Check if user_id and event_id are available
+    if (_userId == null || _eventId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('User or Event information missing. Please login again.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Get feedback text (null if empty)
+      final comments = _feedbackController.text.trim().isEmpty
+          ? null
+          : _feedbackController.text.trim();
+
+      final result = await _feedbackService.submitFeedback(
+        userId: _userId!,
+        eventId: _eventId!,
+        rating: _rating,
+        comments: comments,
+      );
+
+      if (result['success']) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('Thank you for your feedback!'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? 'Failed to submit feedback'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +195,6 @@ class _FeedbackPageState extends State<FeedbackPage> {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -143,7 +281,6 @@ class _FeedbackPageState extends State<FeedbackPage> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
                     // Category Selection
@@ -167,12 +304,11 @@ class _FeedbackPageState extends State<FeedbackPage> {
                             'Emergency', Icons.warning_amber_outlined),
                       ],
                     ),
-
                     const SizedBox(height: 24),
 
-                    // Feedback Text
+                    // Feedback Text (Optional)
                     Text(
-                      'Your Feedback',
+                      'Your Feedback (Optional)',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -202,11 +338,11 @@ class _FeedbackPageState extends State<FeedbackPage> {
                         ],
                       ),
                       child: TextFormField(
-                        controller: _feedback,
+                        controller: _feedbackController,
                         maxLines: 6,
                         decoration: InputDecoration(
                           hintText:
-                          'Tell us about your experience...',
+                          'Tell us about your experience... (Optional)',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -221,12 +357,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
                             ),
                           ),
                         ),
-                        validator: (val) => val == null || val.isEmpty
-                            ? 'Feedback required'
-                            : null,
+                        // ✅ REMOVED validator - feedback text is now optional
                       ),
                     ),
-
                     const SizedBox(height: 32),
 
                     // Submit Button
@@ -253,62 +386,32 @@ class _FeedbackPageState extends State<FeedbackPage> {
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () {
-                            if (_formKey.currentState!.validate()) {
-                              if (_rating == 0) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                        'Please provide a rating'),
-                                    behavior: SnackBarBehavior.floating,
-                                    backgroundColor: Colors.orange,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: const [
-                                      Icon(Icons.check_circle,
-                                          color: Colors.white),
-                                      SizedBox(width: 12),
-                                      Text('Thank you for your feedback!'),
-                                    ],
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                          onTap: _isSubmitting ? null : _submitFeedback,
+                          child: Center(
+                            child: _isSubmitting
+                                ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                                : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.send, color: Colors.white),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Submit Feedback',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
-                              );
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.send, color: Colors.white),
-                              SizedBox(width: 12),
-                              Text(
-                                'Submit Feedback',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -323,7 +426,6 @@ class _FeedbackPageState extends State<FeedbackPage> {
   Widget _buildCategoryChip(String label, IconData icon) {
     final isSelected = _category == label;
     final theme = Theme.of(context);
-
     return FilterChip(
       selected: isSelected,
       label: Row(

@@ -29,6 +29,7 @@ dependencies:
   url_launcher: ^6.2.0
   shared_preferences: ^2.2.2
   permission_handler: ^11.0.1
+  timeago: ^3.6.1
   # Add more UI/helper packages as your app evolves
   # e.g., google_maps_flutter, fl_chart, geolocator, http, etc.
 
