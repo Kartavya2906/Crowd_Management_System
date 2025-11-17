@@ -1,10 +1,25 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/lost_person_service.dart';
 
 class LostPersonForm extends StatefulWidget {
   static const route = '/lost';
-  const LostPersonForm({super.key});
+
+  // Accept optional parameters for pre-filling the form
+  final String? userId;
+  final String? eventId;
+  final String? userName;
+  final String? userPhone;
+
+  const LostPersonForm({
+    super.key,
+    this.userId,
+    this.eventId,
+    this.userName,
+    this.userPhone,
+  });
 
   @override
   State<LostPersonForm> createState() => _LostPersonFormState();
@@ -12,6 +27,7 @@ class LostPersonForm extends StatefulWidget {
 
 class _LostPersonFormState extends State<LostPersonForm> {
   final _formKey = GlobalKey<FormState>();
+  final _lostPersonService = LostPersonService();
 
   // Controllers
   final _reporterName = TextEditingController();
@@ -26,10 +42,51 @@ class _LostPersonFormState extends State<LostPersonForm> {
   ImageProvider? _photo;
   String _selectedGender = 'Male';
   TimeOfDay? _selectedTime;
+  bool _isSubmitting = false;
+
+  // Store userId and eventId from SharedPreferences
+  String? _userId;
+  String? _eventId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  // Load user data from widget parameters or SharedPreferences
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      // Try to get from widget parameters first, then from SharedPreferences
+      _userId = widget.userId ?? prefs.getString('user_id');
+      _eventId = widget.eventId ?? prefs.getString('event_id');
+
+      // Load reporter name
+      if (widget.userName != null && widget.userName!.isNotEmpty) {
+        _reporterName.text = widget.userName!;
+      } else {
+        _reporterName.text = prefs.getString('user_name') ?? '';
+      }
+
+      // Load reporter phone
+      if (widget.userPhone != null && widget.userPhone!.isNotEmpty) {
+        _contactNumber.text = widget.userPhone!;
+      } else {
+        _contactNumber.text = prefs.getString('user_phone') ?? '';
+      }
+    });
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: source);
+    final XFile? pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
 
     if (pickedFile != null) {
       setState(() {
@@ -44,7 +101,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
       context: context,
       builder: (context) => SafeArea(
         child: Wrap(
-          children: <Widget>[
+          children: [
             ListTile(
               leading: const Icon(Icons.photo_library),
               title: const Text('Pick from Gallery'),
@@ -72,6 +129,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
       context: context,
       initialTime: TimeOfDay.now(),
     );
+
     if (picked != null) {
       setState(() {
         _selectedTime = picked;
@@ -121,7 +179,6 @@ class _LostPersonFormState extends State<LostPersonForm> {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Form(
               key: _formKey,
@@ -234,13 +291,11 @@ class _LostPersonFormState extends State<LostPersonForm> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
                     // Reporter Information Section
                     _buildSectionHeader('Reporter Information', isDark),
                     const SizedBox(height: 16),
-
                     _buildTextField(
                       controller: _reporterName,
                       label: 'Your Name (Reporter)',
@@ -249,7 +304,6 @@ class _LostPersonFormState extends State<LostPersonForm> {
                       isDark: isDark,
                     ),
                     const SizedBox(height: 16),
-
                     _buildTextField(
                       controller: _contactNumber,
                       label: 'Contact Number',
@@ -258,13 +312,11 @@ class _LostPersonFormState extends State<LostPersonForm> {
                       keyboardType: TextInputType.phone,
                       isDark: isDark,
                     ),
-
                     const SizedBox(height: 24),
 
                     // Lost Person Details Section
                     _buildSectionHeader('Lost Person Details', isDark),
                     const SizedBox(height: 16),
-
                     _buildTextField(
                       controller: _lostPersonName,
                       label: 'Lost Person Name',
@@ -282,7 +334,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
                             controller: _age,
                             label: 'Age',
                             icon: Icons.cake_outlined,
-                            validator: _req,
+                            validator: _validateAge,
                             keyboardType: TextInputType.number,
                             isDark: isDark,
                           ),
@@ -296,7 +348,8 @@ class _LostPersonFormState extends State<LostPersonForm> {
                                 colors: isDark
                                     ? [
                                   Colors.orange.shade900.withOpacity(0.2),
-                                  Colors.deepOrange.shade900.withOpacity(0.1),
+                                  Colors.deepOrange.shade900
+                                      .withOpacity(0.1),
                                 ]
                                     : [
                                   Colors.orange.shade50,
@@ -308,7 +361,8 @@ class _LostPersonFormState extends State<LostPersonForm> {
                               value: _selectedGender,
                               decoration: InputDecoration(
                                 labelText: 'Gender',
-                                prefixIcon: const Icon(Icons.wc, color: Colors.orange),
+                                prefixIcon: const Icon(Icons.wc,
+                                    color: Colors.orange),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
@@ -316,7 +370,8 @@ class _LostPersonFormState extends State<LostPersonForm> {
                                 filled: true,
                                 fillColor: Colors.transparent,
                               ),
-                              items: ['Male', 'Female', 'Other'].map((String value) {
+                              items: ['Male', 'Female', 'Other']
+                                  .map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Text(value),
@@ -333,21 +388,19 @@ class _LostPersonFormState extends State<LostPersonForm> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     _buildTextField(
                       controller: _description,
                       label: 'Clothing/Physical Description',
                       icon: Icons.description_outlined,
+                      validator: _req,
                       maxLines: 4,
                       isDark: isDark,
                     ),
-
                     const SizedBox(height: 24),
 
                     // Last Seen Details Section
                     _buildSectionHeader('Last Seen Details', isDark),
                     const SizedBox(height: 16),
-
                     _buildTextField(
                       controller: _lastSeenLocation,
                       label: 'Last Seen Location',
@@ -379,7 +432,8 @@ class _LostPersonFormState extends State<LostPersonForm> {
                         child: InputDecorator(
                           decoration: InputDecoration(
                             labelText: 'Last Seen Time',
-                            prefixIcon: const Icon(Icons.access_time, color: Colors.orange),
+                            prefixIcon: const Icon(Icons.access_time,
+                                color: Colors.orange),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -400,14 +454,15 @@ class _LostPersonFormState extends State<LostPersonForm> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
 
                     // Warning Message
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
+                        color: isDark
+                            ? Colors.orange.shade900.withOpacity(0.2)
+                            : Colors.orange.shade50,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: Colors.orange.shade200,
@@ -416,13 +471,16 @@ class _LostPersonFormState extends State<LostPersonForm> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
+                          Icon(Icons.info_outline,
+                              color: Colors.orange.shade700, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'This report will be immediately sent to event security and staff.',
                               style: TextStyle(
-                                color: Colors.orange.shade700,
+                                color: isDark
+                                    ? Colors.orange.shade300
+                                    : Colors.orange.shade700,
                                 fontSize: 12,
                               ),
                             ),
@@ -430,7 +488,6 @@ class _LostPersonFormState extends State<LostPersonForm> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
                     // Submit Button
@@ -457,10 +514,21 @@ class _LostPersonFormState extends State<LostPersonForm> {
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: _submitForm,
-                          child: Row(
+                          onTap: _isSubmitting ? null : _submitForm,
+                          child: _isSubmitting
+                              ? const Center(
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          )
+                              : const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
+                            children: [
                               Icon(Icons.send, color: Colors.white),
                               SizedBox(width: 12),
                               Text(
@@ -477,7 +545,6 @@ class _LostPersonFormState extends State<LostPersonForm> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -557,7 +624,7 @@ class _LostPersonFormState extends State<LostPersonForm> {
     );
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       if (_imageFile == null) {
         _showErrorSnackBar('Please upload a photo of the lost person.');
@@ -569,76 +636,145 @@ class _LostPersonFormState extends State<LostPersonForm> {
         return;
       }
 
-      // Show success dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.green.shade600,
-                    size: 48,
-                  ),
+      // Check if userId and eventId are available from SharedPreferences
+      if (_userId == null || _userId!.isEmpty) {
+        _showErrorSnackBar('User ID is missing. Please log in again.');
+        return;
+      }
+
+      if (_eventId == null || _eventId!.isEmpty) {
+        _showErrorSnackBar('Event ID is missing. Please select an event.');
+        return;
+      }
+
+      setState(() {
+        _isSubmitting = true;
+      });
+
+      // Format time as HH:MM
+      final formattedTime =
+          '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+
+      try {
+        final result = await _lostPersonService.submitLostPersonReport(
+          reporterId: _userId!,  // Using SharedPreferences value
+          reporterName: _reporterName.text.trim(),
+          reporterPhone: _contactNumber.text.trim(),
+          lostPersonName: _lostPersonName.text.trim(),
+          age: int.parse(_age.text.trim()),
+          gender: _selectedGender,
+          description: _description.text.trim(),
+          lastSeenLocation: _lastSeenLocation.text.trim(),
+          lastSeenTime: formattedTime,
+          eventId: _eventId!,  // Using SharedPreferences value
+          photo: _imageFile,
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        if (result['success'] == true) {
+          // Show success dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Report Submitted',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your report has been successfully sent to event security and admin team.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog
-                      Navigator.of(context).pop(); // Close form
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange.shade600,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.green.shade600,
+                        size: 48,
                       ),
                     ),
-                    child: const Text(
-                      'OK',
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Report Submitted',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      result['message'] ??
+                          'Your lost person report has been submitted successfully.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (result['data'] != null && result['data']['id'] != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Report ID: ${result['data']['id']}',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(); // Close dialog
+                          Navigator.of(context).pop(); // Close form
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange.shade600,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           );
-        },
-      );
+        } else {
+          // Show error message
+          _showErrorSnackBar(result['message'] ??
+              'Failed to submit report. Please try again.');
+        }
+      } catch (e) {
+        if (!mounted) return;
+
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        _showErrorSnackBar('An unexpected error occurred: ${e.toString()}');
+      }
     }
   }
 
@@ -663,6 +799,19 @@ class _LostPersonFormState extends State<LostPersonForm> {
 
   String? _req(String? v) =>
       (v == null || v.trim().isEmpty) ? 'This field is required' : null;
+
+  String? _validateAge(String? v) {
+    if (v == null || v.trim().isEmpty) {
+      return 'Age is required';
+    }
+
+    final age = int.tryParse(v.trim());
+    if (age == null || age <= 0 || age > 150) {
+      return 'Please enter a valid age';
+    }
+
+    return null;
+  }
 
   @override
   void dispose() {

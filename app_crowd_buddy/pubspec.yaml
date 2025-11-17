@@ -27,6 +27,8 @@ dependencies:
   firebase_auth: ^5.3.1
   http: ^1.1.0
   url_launcher: ^6.2.0
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.0.1
   # Add more UI/helper packages as your app evolves
   # e.g., google_maps_flutter, fl_chart, geolocator, http, etc.
 
