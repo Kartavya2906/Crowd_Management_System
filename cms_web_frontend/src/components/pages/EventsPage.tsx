@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Calendar, MapPin, Users, X, Loader2, Trash2, Edit, ArrowRight } from 'lucide-react';
 
 // Replace with your actual backend URL
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://crowd-management-system-lx1h.onrender.com';
 
 // Types
 interface Area {

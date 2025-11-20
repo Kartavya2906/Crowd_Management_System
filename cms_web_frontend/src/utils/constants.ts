@@ -1,7 +1,7 @@
 // src/utils/constants.ts
 
 // API Base URL - Update this based on your environment
-export const API_BASE_URL = 'http://localhost:8000';;
+export const API_BASE_URL = 'https://crowd-management-system-lx1h.onrender.com';;
 
 // Other constants can be added here
 export const APP_NAME = 'Event Management System';
