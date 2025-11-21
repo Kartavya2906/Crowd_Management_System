@@ -66,10 +66,9 @@ Access the organizer dashboard to:
 
 ### 📱 Mobile App Download
 
-**Android APK**: [Download CrowdBuddy App](https://drive.google.com/file/d/YOUR_SHARED_LINK/view?usp=sharing)
+**Android APK**: [Download CrowdBuddy App](c:\Users\Anshika Agarwal\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\TempState\DE75FA7494E402E31126B79B98474AC3\app-release.apk)
 
-> **Note**: Replace the above link with your actual Google Drive or GitHub release link for the APK file located at:
-> `c:\Users\Anshika Agarwal\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\TempState\DE75FA7494E402E31126B79B98474AC3\app-release.apk`
+
 
 **Installation Steps**:
 1. Download the APK file
@@ -532,13 +531,6 @@ curl -X POST "http://localhost:8000/events/" \
 
 ---
 
-## 📸 Screenshots
-
-### Web Portal
-*Coming soon - Add screenshots of your web dashboard here*
-
-### Mobile App
-*Coming soon - Add screenshots of your Flutter app here*
 
 ---
 
@@ -678,18 +670,18 @@ We welcome contributions! Please follow these steps:
 
 **Project Team Members**:
 - Anshika Agarwal
-- Kartavya ([@Kartavya2906](https://github.com/Kartavya2906))
-- *Add other team members*
+- Kartavya Gupta ([@Kartavya2906](https://github.com/Kartavya2906))
+- Sumedha Gabhane
+- Maynak Soni
+- Darshita Bansal
+- Vaidehi Vijay
 
-**Faculty Advisor**: *Your faculty name*
+**Faculty Advisor**: *Dr Priodyuti Pradhan*
 
-**Institution**: *Your college/university name*
+**Institution**: *Indian Institute of Information Technology Raichur*
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -708,7 +700,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support & Contact
 
 - **Issues**: [GitHub Issues](https://github.com/Kartavya2906/Crowd_Management_System/issues)
-- **Email**: *your-email@example.com*
+- **Email**: aanshika368@gmail.com
 - **Documentation**: See `backend/README.md` and `cms_web_frontend/README.md`
 
 ---
