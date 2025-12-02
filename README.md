@@ -66,8 +66,7 @@ Access the organizer dashboard to:
 
 ### 📱 Mobile App Download
 
-**Android APK**: [Download CrowdBuddy App](c:\Users\Anshika Agarwal\AppData\Local\Packages\5319275A.WhatsAppDesktop_cv1g1gvanyjgm\TempState\DE75FA7494E402E31126B79B98474AC3\app-release.apk)
-
+**Android APK**: https://drive.google.com/drive/u/0/folders/1AGxe26UYHv-4rcs576upvQqbv9d-b54p
 
 
 **Installation Steps**:
