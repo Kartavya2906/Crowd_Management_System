@@ -129,15 +129,12 @@ Access the organizer dashboard to:
 ### 🔔 Alert System
 - **Alert Types**: Warning, Emergency, Info, Weather
 - **Severity Levels**: Low, Medium, High, Critical
-- **Weather Integration**: Real-time weather conditions and forecasts
 - **Active/Inactive Status**: Manage alert lifecycle
 
 ### 👤 User Management
 - **Role-Based Access**:
   - 👥 Public (Attendees)
   - 🎫 Organizer (Event Managers)
-  - 🏥 Medical (Medical Staff)
-  - 👮 Police (Security Personnel)
 - **Secure Authentication**: User registration and login
 - **Profile Management**: Update user information
 
